@@ -38,10 +38,10 @@ def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
 
     x = x0
     myp = []
-    iter = 0
+    i = 0
     stop = 0
     myps = np.zeros((math.ceil(i_max), n))
-    while (iter < i_max and stop == 0):
+    while (i < i_max and stop == 0):
         f0, g = fungrad(x, A, B)
         g_ = (g[:n*n]+g[n*n:])/2
         g = np.concatenate((g_,g_))
@@ -54,7 +54,7 @@ def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
         else:
             salpha = 1
         x = x + salpha*d
-        iter += 1
+        i += 1
         if salpha == 0:
             stop = 1
         # TODO: add the list output computations here
@@ -63,22 +63,11 @@ def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
         P, Q = unstack (x, m, n)
         myp, _, _ = assign(P,True)
 
-    f = np.sum(A*(B[myp,:][:,myp]))
-    return (f, myp, x, iter)
+    f = np.sum(A*(B[myp,:][:,myp]))/2
+    return (f, myp, x, i)
 
 def print_result(x):
-    print(f"Final permutation: {x[1]}\n")
-    print(f"Final cost value: {x[0]}\n")
-    print(f"Final optimized x vector: {x[2]}\n")
-    print(f"Final number of iterations: {x[3]}\n")
-
-# sample problem:
-# A is flow, B is distance
-# 0 3 1      0 1 2
-# 3 0 2      1 0 3
-# 1 2 0      2 3 0
-
-A = np.array([[0,3,1],[3,0,2],[1,2,0]])
-B = np.array([[0,1,2],[1,0,3],[2,3,0]])
-i_max = 1
-print_result(sfw(A,B,i_max))
+    print("Final permutation: ", x[1])
+    print("Final cost value: ", x[0])
+    print("Final optimized x vector: ", x[2])
+    print("Final number of iterations: ", x[3])
