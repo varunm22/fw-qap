@@ -3,7 +3,7 @@ from utils import *
 from line_search import *
 import numpy as np
 
-# TODO: refactor all for square matrices
+# TODO: get this to work for simple tests
 # TODO: figure out why x has 2n^2 elements instead of n^2
 
 def flat_concat(x1,x2):
@@ -12,18 +12,18 @@ def flat_concat(x1,x2):
     return np.concatenate((x1_flat, x2_flat))
 
 def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
-    m, n = A.shape
+    n = n_(A)
     stype = 2 # some parameter for line search, this assumes function is quadratic
     if x0 == None:
         # if i_max == 0.5, use identity as starting point and perform
         # one iteration of FW with step length 1
         if i_max == 0.5:
-            t = np.eye(m)
+            t = np.eye(n)
             x0 = flat_concat(t,t)
         else:
-            x0 = np.concatenate((1/m*np.ones(m*m), 1/n*np.ones(n*n)))
+            x0 = np.concatenate((1/n*np.ones(n*n), 1/n*np.ones(n*n)))
     elif x0 == -1: # random start near center of space
-        X = np.ones(m)/m
+        X = np.ones(n)/n
         lam = 0.5
         X = (1-lam)*X + lam*sink(np.random.random(A.shape), 10)
         Y = X
@@ -45,7 +45,7 @@ def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
         f0, g = fungrad(x, A, B)
         g_ = (g[:n*n]+g[n*n:])/2
         g = np.concatenate((g_,g_))
-        d, myp = dsproj(x,g,m,n)
+        d, myp = dsproj(x,g,n)
         stop_norm = d.dot(d)
         if stop_norm < stop_tol:
             stop = 1
@@ -60,10 +60,11 @@ def sfw(A, B, i_max = 30, x0=None, stop_tol = 0.0001):
         # TODO: add the list output computations here
 
     if salpha != 1:
-        P, Q = unstack (x, m, n)
+        P, Q = unstack (x, n)
         myp, _, _ = assign(P,True)
 
-    f = np.sum(A*(B[myp,:][:,myp]))/2
+    P = perm2mat(myp)
+    f = np.sum(P.dot(A).dot(P.T)*B)/2
     return (f, myp, x, i)
 
 def print_result(x):

@@ -3,23 +3,29 @@ import scipy
 from scipy import sparse
 import lap
 
-def stack(P, Q, m, n):
-    return np.concatenate(( P.reshape(m*m), Q.reshape(n*n)))
+def n_(A):
+    m, n = A.shape
+    if m != n:
+        raise "non-square input matrix"
+    return n
 
-def unstack(x, m, n):
-    P = x[0:m*m].reshape(m, m)
-    Q = x[m*m:m*m+n*n].reshape(n, n)
+def stack(P, Q, n):
+    return np.concatenate(( P.reshape(n*n), Q.reshape(n*n)))
+
+def unstack(x, n):
+    P = x[0:n*n].reshape(n, n)
+    Q = x[n*n:2*n*n].reshape(n, n)
     return (P,Q)
 
 def stoch(A, dim = 1):
-    m, n = A.shape
+    n = n_(A)
     if dim == 1:
         s = np.sum(A, 1)
         if any(s == 0):
             print("Zero sum found")
             s = np.maximum(s, np.finfo(float).tiny)
         else:
-            A = scipy.sparse.spdiags(1/s,0,m,m) * A
+            A = scipy.sparse.spdiags(1/s,0,n,n) * A
     else: # dim == 0
         s = np.sum(A, 0)
         if any(s == 0):
@@ -36,16 +42,16 @@ def sink(A, n):
     return A
 
 def fun(x, A, B):
-   m, n = A.shape
-   P, Q = unstack(x, m, n)
-   return (np.sum(P.dot(A).dot(Q.T)*B))
+    n = n_(A)
+    P, Q = unstack(x, n)
+    return (np.sum(P.dot(A).dot(P.T)*B))
 
 def fungrad(x, A, B):
-    m, n = A.shape
-    P, Q = unstack(x, m, n)
+    n = n_(A)
+    P, Q = unstack(x, n)
     f0 = fun(x,A,B)
-    g = B.dot(Q).dot(A.T).reshape(m*m)
-    g = np.concatenate((g, B.T.dot(P).dot(A).reshape(n*n)))
+    g = B.dot(Q).dot(A.T).reshape(n*n)
+    g = np.concatenate((g, g))
     return (f0, g)
 
 # TODO: make sure there aren't any major differences between the python lapjv
@@ -55,10 +61,9 @@ def lapjv(C, resolution):
     return (x, cost)
 
 def maxassign_linprog(C):
-    m, n = C.shape
+    n = n_(C)
     if m>n:
         raise ValueError("matrix cannot have more rows than columns")
-    C = np.concatenate((C, np.zeros((n-m, n))))
     A = np.concatenate((np.kron(np.eye(n), np.ones((1,n))), np.kron(np.ones((1,n)), np.eye(n))))
     A = A[:-1,]
     b = np.ones((2*n-1,1))
@@ -68,7 +73,7 @@ def maxassign_linprog(C):
     x = X.T
     temp,p = np.max(x, axis = 1), np.argmax(x, axis = 1)
     w = -c.dot(res.x)
-    p = p[1:m]
+    p = p[1:n]
     return (p, w, x)
 
 def perm2mat(p):
@@ -87,12 +92,12 @@ def assign(A, munk = True):
         p, w, x = maxassign_linprog(A.T)
         return (p.T, w, x)
 
-def dsproj(x, g, m, n):
-    P, Q = unstack(x, m, n)
-    gP, gQ = unstack(g, m, n)
+def dsproj(x, g, n):
+    P, Q = unstack(x, n)
+    gP, gQ = unstack(g, n)
     q, wq, wQ = assign(-gQ)
     wP = wQ
-    w = stack(wP, wQ, m, n)
+    w = stack(wP, wQ, n)
     d = w-x
     return (d, q)
 
