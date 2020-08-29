@@ -1,10 +1,10 @@
 ### Format of input test files is:
 
-A
+W
 
-B
+D
 
-where A is the flows matrix and B is the distance matrix. Each is represented as
+where W is the flows matrix and D is the distance matrix. Each is represented as
 n lines, each of which has n space separated numbers. 
 
 ### Format of output test files is:

@@ -3,19 +3,11 @@ import scipy
 from scipy import sparse
 import lap
 
-def n_(A):
-    m, n = A.shape
+def n_(W):
+    m, n = W.shape
     if m != n:
         raise "non-square input matrix"
     return n
-
-def stack(P, Q, n):
-    return np.concatenate(( P.reshape(n*n), Q.reshape(n*n)))
-
-def unstack(x, n):
-    P = x[0:n*n].reshape(n, n)
-    Q = x[n*n:2*n*n].reshape(n, n)
-    return (P,Q)
 
 def stoch(A, dim = 1):
     n = n_(A)
@@ -41,40 +33,23 @@ def sink(A, n):
         A = stoch(A, 1)
     return A
 
-def fun(x, A, B):
-    n = n_(A)
-    P, Q = unstack(x, n)
-    return (np.sum(P.dot(A).dot(P.T)*B))
+def f_(x, W, D):
+    P = x.reshape(W.shape)
+    return np.sum(P.dot(W).dot(P.T)*D)/2
 
-def fungrad(x, A, B):
-    n = n_(A)
-    P, Q = unstack(x, n)
-    f0 = fun(x,A,B)
-    g = B.dot(Q).dot(A.T).reshape(n*n)
-    g = np.concatenate((g, g))
-    return (f0, g)
+def g_(x, W, D):
+    n = n_(W)
+    P = x.reshape(W.shape)
+    return (W.dot(P).dot(D.T) + W.T.dot(P).dot(D)).reshape(n*n)
 
 # TODO: make sure there aren't any major differences between the python lapjv
 # function and the one they code up
-def lapjv(C, resolution):
+def lapjv(C):
     cost, x, y = lap.lapjv(C)
-    return (x, cost)
-
-def maxassign_linprog(C):
-    n = n_(C)
-    if m>n:
-        raise ValueError("matrix cannot have more rows than columns")
-    A = np.concatenate((np.kron(np.eye(n), np.ones((1,n))), np.kron(np.ones((1,n)), np.eye(n))))
-    A = A[:-1,]
-    b = np.ones((2*n-1,1))
-    c = -C.reshape(n*2)
-    res = linprog(c, A_eq=A, b_eq=b, bounds=(0,1), options={"disp": True})
-    X = res.x.reshape(n,n)
-    x = X.T
-    temp,p = np.max(x, axis = 1), np.argmax(x, axis = 1)
-    w = -c.dot(res.x)
-    p = p[1:n]
-    return (p, w, x)
+    Q = np.zeros(C.shape)
+    for i in range(n):
+        Q[i, x[i]] = 1
+    return Q
 
 def perm2mat(p):
     n = len(p)
@@ -83,22 +58,27 @@ def perm2mat(p):
         P[i, p[i]] = 1
     return P
 
-def assign(A, munk = True):
-    if munk:
-        p, w = lapjv(-A.T, 0.01)
-        x = perm2mat(p).T
-        return p, -w, x
+def line_search(x, d, g, W, D):
+    b = g.dot(d)
+    c = f_(x,W,D)
+    f_vertex = f_(x+d,W,D)
+    a = f_vertex - b - c
+    if (abs(a) < np.spacing(1)): # function is linear
+        alpha = 1.
     else:
-        p, w, x = maxassign_linprog(A.T)
-        return (p.T, w, x)
+        alpha = min(1,max(-b/(2*a),0))
+    f_alpha = f_(x+alpha*d,W,D)
 
-def dsproj(x, g, n):
-    P, Q = unstack(x, n)
-    gP, gQ = unstack(g, n)
-    q, wq, wQ = assign(-gQ)
-    wP = wQ
-    w = stack(wP, wQ, n)
-    d = w-x
-    return (d, q)
+    if (f_alpha>c):
+        alpha = 0
+        f_alpha = c
 
+    if (f_alpha > f_vertex):
+        alpha = 1
+        f_alpha = f_vertex
+        f0new = f_alpha
 
+    xt = x + alpha*d
+    f0new = f_(xt, W, D)
+
+    return (f0new, alpha)
