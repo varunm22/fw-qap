@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 *.pem
 *x360*
+aws-connect-info/
+.ipynb_checkpoints/
