@@ -1,14 +1,32 @@
 import sys
+import time
 from functools import partial
 import numpy as np
 from sfw import sfw
 from tos import tos
-import utils
+from utils import *
 import matplotlib
 import matplotlib.pyplot as plt
 
 num_tests = 7
 optimal_costs = [10, 395, 314, 313, 470, 904, 1160]
+
+def solve_qap(W, D, solver, random):
+    n = n_(W)
+    X0 = np.ones((n, n))/n
+    if random:
+        lam = 0.5
+        X0 = (1-lam)*X0 + lam*sink(np.random.random(W.shape), 10)
+
+    t0 = time.time()
+    if solver == "sfw":
+        f_real, p_real, _, _ = sfw( W, D, X0, i_max = 100)
+    elif solver == "tos":
+        f_real, p_real, _, _ = tos(W, D, X0, i_max = 1000)
+    else:
+        raise "not valid"
+    t = time.time()-t0
+    return f_real, p_real, t
 
 """
 verbose:
@@ -17,7 +35,7 @@ verbose:
     2: print expected vs obtained
 random: if true, shift x0 by doubly stochastic random matrix
 """
-def single_test(num, verbose=0, random=False):
+def single_test(num, solver, verbose=0, random=False):
     def process_file(suffix):
         file_lines = open("test-files/" + str(num) + "-" + suffix, 'r').readlines()
         return [[int(elt) for elt in line.strip().split(' ')] for line in file_lines]
@@ -32,13 +50,8 @@ def single_test(num, verbose=0, random=False):
         return(np.array(elts[0]), elts[1][0])
 
     W, D = generate_in()
-    if random:
-        x0 = -1
-    else:
-        x0 = None
-    f_real, p_real, _, _ = sfw( W, D, i_max = 50, x0=x0) # ignored args are final x and num iters
-    # f_real, p_real, _, _ = tos( W, D, i_max = 50, X0=-1) # ignored args are final x and num iters
     p, f = generate_out()
+    f_real, p_real, t = solve_qap(W, D, solver, random)
     if (verbose != 0):
         result = np.array_equal(p, p_real) and f == f_real
         result_str = "PASS" if result else "FAIL"
@@ -50,27 +63,37 @@ def single_test(num, verbose=0, random=False):
         print("OBTAINED RESULTS")
         print("p: ", p_real)
         print("f: ", f_real)
-    return (p_real, f_real)
+    return (p_real, f_real, t)
 
 ### Test suite building blocks ###
-#TODO: make these all gather timings as well
 
-def test_k_times(num, k):
-    costs = []
+def test_k_times(num, solver, k):
+    results = []
     for _ in range(k):
-        costs.append(single_test(num, random=True))
-    return costs
+        results.append(single_test(num, solver, random=True))
+    return results
 
-def min_of_k(num, k):
-    costs = test_k_times(num, k)
-    return (min(costs, key = lambda t: t[1]))
+def min_of_k(num, solver, k):
+    results = test_k_times(num, solver, k)
+    perm, cost, _ = min(results, key = lambda t: t[1])
+    t = sum([t[2] for t in results])
+    return perm, cost, t
 
-def min_of_k_n_times(num, k, n):
-    costs = []
+def min_of_k_n_times(num, solver, k, n):
+    results = []
     for _ in range(n):
-        costs.append(min_of_k(num, k))
-    return costs
+        results.append(min_of_k(num, solver, k))
+    return results
 
+# give mean and variance of cost and time values
+# can be used for both test_k_times and min_of_k_n_times results
+def summarize(results):
+    def mean_and_stdev(i):
+        l = [t[i] for t in results]
+        return {"mean": np.mean(l), "stdev": np.std(l)}
+    return { "cost": mean_and_stdev(1), "time": mean_and_stdev(2) }
+
+# TODO: make this be for set of tests
 def for_all_tests(f):
     results = {}
     for i in range(num_tests):
@@ -85,17 +108,8 @@ def histogram(num, costs):
     plt.hist(costs, 50)
     plt.show()
 
-
-def pprint(l):
-    num_min = 0
-    avg = 0
-    for i in l:
-        if i[1] == 314:
-            num_min += 1
-        avg += i[1]
-        print(i)
-    print("num min:", num_min, "/", len(l))
-    print("avg:", avg/len(l))
-
 # print(for_all_tests(partial(min_of_k_n_times, k=20, n=1)))
-pprint(test_k_times(6, 500))
+# print(summarize(test_k_times(7, "sfw", 500)))
+# print(summarize(test_k_times(7, "tos", 500)))
+print(summarize(min_of_k_n_times(7, "sfw", 10, 100)))
+print(summarize(min_of_k_n_times(7, "tos", 2, 100)))

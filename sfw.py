@@ -2,21 +2,9 @@ import math
 from utils import *
 import numpy as np
 
-def sfw(W, D, i_max = 30, x0=None, stop_tol = 0.0001):
-    # TODO: factor out this initialization logic
+def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
     n = n_(W)
-    if x0 == None:
-        x0 = np.ones((n,n))/n
-    elif x0 == -1: # random start near center of space
-        X = np.ones((n,n))/n
-        lam = 0.5
-        x0 = (1-lam)*X + lam*sink(np.random.random(W.shape), 10)
-    elif x0.shape == (W.shape[0],): # permutation provided as 1d array
-        x0 = perm2mat(x0).T
-    else: # actual permutation array provided
-        pass
-
-    X = x0
+    X = X0
     myp = []
     i = 0
     stop = 0
@@ -42,10 +30,3 @@ def sfw(W, D, i_max = 30, x0=None, stop_tol = 0.0001):
     P = perm2mat(p_out)
     f = f_(P, W, D)
     return (f, p_out, X, i)
-
-
-def print_result(x):
-    print("Final permutation: ", x[1])
-    print("Final cost value: ", x[0])
-    print("Final optimized x vector: ", x[2])
-    print("Final number of iterations: ", x[3])
