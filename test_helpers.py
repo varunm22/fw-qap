@@ -1,11 +1,9 @@
+import os
 import sys
 import time
-from functools import partial
 import numpy as np
 from utils import *
 from solvers import sfw, tos
-
-num_tests = 7
 
 def solve_qap(W, D, solver, random):
     n = n_(W)
@@ -96,15 +94,15 @@ def summarize(results):
         return {"mean": np.mean(l), "stdev": np.std(l)}
     return { "cost": mean_and_stdev(1), "time": mean_and_stdev(2) }
 
-# TODO: make this be for set of tests
-def for_all_tests(f, tests):
-    results = {}
-    for test in range(tests):
-        results[i+1] = f(test)
-    return results
+# get list of tests from collection name
+def collection(collection):
+    collections = os.listdir("data")
+    assert collection in collections
+    test_names = [x[:-4] for x in os.listdir(f"data/{collection}/input")]
+    return [(collection, test_name) for test_name in test_names]
 
-# print(for_all_tests(partial(min_of_k_n_times, k=20, n=1)))
+print(collection("qaplib"))
 # print(summarize(min_of_k_n_times(("neos-guide", "7"), "sfw", 1, 100)))
 # print(summarize(min_of_k_n_times(("neos-guide", "7"), "tos", 3, 10)))
-print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "sfw", 3, 20)))
-print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "tos", 3, 20)))
+# print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "sfw", 3, 20)))
+# print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "tos", 3, 20)))
