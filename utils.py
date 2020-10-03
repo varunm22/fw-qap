@@ -34,7 +34,7 @@ def sink(A, n):
     return A
 
 def f_(X, W, D):
-    return np.sum(X.dot(W).dot(X.T)*D)/2
+    return np.sum(X.dot(W).dot(X.T)*D)
 
 def g_(X, W, D):
     # return (W.dot(P).dot(D.T) + W.T.dot(P).dot(D)).reshape(n*n)
@@ -58,26 +58,14 @@ def perm2mat(p):
     return P
 
 def line_search(X, d, g, W, D):
-    b = np.sum(g*d)
-    c = f_(X,W,D)
-    f_vertex = f_(X+d,W,D)
-    a = f_vertex - b - c
-    if (abs(a) < np.spacing(1)): # function is linear
-        alpha = 1.
+    tA = np.sum(d*(W.dot(d).dot(D)))
+    # print("tA: ", tA)
+    if tA > 0:
+        tB = np.sum(X*(W.dot(d).dot(D))) + np.sum(d*(W.dot(X).dot(D)))
+        # print("tB: ", tB)
+        eta = -tB/(2*tA)
+        # print("eta raw: ", eta)
+        eta = max(min(eta,1),0)
     else:
-        alpha = min(1,max(-b/(2*a),0))
-    f_alpha = f_(X+alpha*d,W,D)
-
-    if (f_alpha>c):
-        alpha = 0
-        f_alpha = c
-
-    if (f_alpha > f_vertex):
-        alpha = 1
-        f_alpha = f_vertex
-        f0new = f_alpha
-
-    X_t = X + alpha*d
-    f0new = f_(X_t, W, D)
-
-    return (f0new, alpha)
+        eta = 1
+    return eta

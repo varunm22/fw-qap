@@ -2,14 +2,10 @@ import sys
 import time
 from functools import partial
 import numpy as np
-from sfw import sfw
-from tos import tos
 from utils import *
-import matplotlib
-import matplotlib.pyplot as plt
+from solvers import sfw, tos
 
 num_tests = 7
-optimal_costs = [10, 395, 314, 313, 470, 904, 1160]
 
 def solve_qap(W, D, solver, random):
     n = n_(W)
@@ -20,11 +16,15 @@ def solve_qap(W, D, solver, random):
 
     t0 = time.time()
     if solver == "sfw":
-        f_real, p_real, _, _ = sfw( W, D, X0, i_max = 100)
+        X = sfw( W, D, X0, i_max = 10000)
     elif solver == "tos":
-        f_real, p_real, _, _ = tos(W, D, X0, i_max = 1000)
+        X = tos(W, D, X0, i_max = 10000)
     else:
         raise "not valid"
+
+    _, _, p_real = lap.lapjv(-X)
+    P = perm2mat(p_real)
+    f_real = f_(P, W, D)
     t = time.time()-t0
     return f_real, p_real, t
 
@@ -35,19 +35,22 @@ verbose:
     2: print expected vs obtained
 random: if true, shift x0 by doubly stochastic random matrix
 """
-def single_test(num, solver, verbose=0, random=False):
-    def process_file(suffix):
-        file_lines = open("test-files/" + str(num) + "-" + suffix, 'r').readlines()
-        return [[int(elt) for elt in line.strip().split(' ')] for line in file_lines]
+def single_test(test, solver, verbose=0, random=False):
+    collection, test_name = test
+    def process_file(in_or_out, ext):
+        path = f"data/{collection}/{in_or_out}/{test_name}.{ext}"
+        file_lines = open(path, 'r').readlines()
+        file_lines = [l for l in file_lines if l != "\n"]
+        return [[int(elt) for elt in line.strip().split()] for line in file_lines]
 
     def generate_in():
-        elts = process_file("in")
-        n = len(elts[0])
+        elts = process_file("input", "dat")
+        n = elts.pop(0)[0]
         return(np.array(elts[:n]), np.array(elts[n:]))
 
     def generate_out():
-        elts = process_file("out")
-        return(np.array(elts[0]), elts[1][0])
+        elts = process_file("output", "sln")
+        return(np.array(elts[1]), elts[1][1])
 
     W, D = generate_in()
     p, f = generate_out()
@@ -55,7 +58,7 @@ def single_test(num, solver, verbose=0, random=False):
     if (verbose != 0):
         result = np.array_equal(p, p_real) and f == f_real
         result_str = "PASS" if result else "FAIL"
-        print(f"Test number {num} result: {result_str}")
+        print(f"Test {test_name} from {collection} result: {result_str}")
     if (verbose == 2 or (verbose == 1 and not result)):
         print("EXPECTED RESULTS")
         print("p: ", p)
@@ -67,22 +70,22 @@ def single_test(num, solver, verbose=0, random=False):
 
 ### Test suite building blocks ###
 
-def test_k_times(num, solver, k):
+def test_k_times(test, solver, k):
     results = []
     for _ in range(k):
-        results.append(single_test(num, solver, random=True))
+        results.append(single_test(test, solver, random=True))
     return results
 
-def min_of_k(num, solver, k):
-    results = test_k_times(num, solver, k)
+def min_of_k(test, solver, k):
+    results = test_k_times(test, solver, k)
     perm, cost, _ = min(results, key = lambda t: t[1])
     t = sum([t[2] for t in results])
     return perm, cost, t
 
-def min_of_k_n_times(num, solver, k, n):
+def min_of_k_n_times(test, solver, k, n):
     results = []
     for _ in range(n):
-        results.append(min_of_k(num, solver, k))
+        results.append(min_of_k(test, solver, k))
     return results
 
 # give mean and variance of cost and time values
@@ -94,22 +97,14 @@ def summarize(results):
     return { "cost": mean_and_stdev(1), "time": mean_and_stdev(2) }
 
 # TODO: make this be for set of tests
-def for_all_tests(f):
+def for_all_tests(f, tests):
     results = {}
-    for i in range(num_tests):
-        results[i+1] = f(i+1)
+    for test in range(tests):
+        results[i+1] = f(test)
     return results
 
-### Data plotting functions ###
-
-def histogram(num, costs):
-    fig, ax = plt.subplots()
-    ax.set_title("Costs for test number " + str(num) + " with min cost " + str(optimal_costs[num-1]))
-    plt.hist(costs, 50)
-    plt.show()
-
 # print(for_all_tests(partial(min_of_k_n_times, k=20, n=1)))
-# print(summarize(test_k_times(7, "sfw", 500)))
-# print(summarize(test_k_times(7, "tos", 500)))
-print(summarize(min_of_k_n_times(7, "sfw", 10, 100)))
-print(summarize(min_of_k_n_times(7, "tos", 2, 100)))
+# print(summarize(min_of_k_n_times(("neos-guide", "7"), "sfw", 1, 100)))
+# print(summarize(min_of_k_n_times(("neos-guide", "7"), "tos", 3, 10)))
+print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "sfw", 3, 20)))
+print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "tos", 3, 20)))
