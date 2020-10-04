@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import numpy as np
 from utils import *
@@ -38,32 +37,37 @@ def single_test(test, solver, verbose=0, random=False):
     def process_file(in_or_out, ext):
         path = f"data/{collection}/{in_or_out}/{test_name}.{ext}"
         file_lines = open(path, 'r').readlines()
-        file_lines = [l for l in file_lines if l != "\n"]
-        return [[int(elt) for elt in line.strip().split()] for line in file_lines]
+        file_contents = " ".join(file_lines).replace("\n"," ").split()
+        return [int(elt) for elt in file_contents]
 
     def generate_in():
         elts = process_file("input", "dat")
-        n = elts.pop(0)[0]
-        return(np.array(elts[:n]), np.array(elts[n:]))
+        n = elts.pop(0)
+        assert len(elts) == 2*n**2
+        return np.array(elts[:n**2]).reshape((n,n)), np.array(elts[n**2:]).reshape((n,n))
 
+    # TODO: make this work with new process file logic
     def generate_out():
         elts = process_file("output", "sln")
-        return(np.array(elts[1]), elts[1][1])
+        n = elts.pop(0)
+        f = elts.pop(0)
+        assert len(elts) == n
+        return(f, np.array(elts))
 
     W, D = generate_in()
-    p, f = generate_out()
     f_real, p_real, t = solve_qap(W, D, solver, random)
     if (verbose != 0):
+        f, p = generate_out()
         result = np.array_equal(p, p_real) and f == f_real
         result_str = "PASS" if result else "FAIL"
         print(f"Test {test_name} from {collection} result: {result_str}")
-    if (verbose == 2 or (verbose == 1 and not result)):
-        print("EXPECTED RESULTS")
-        print("p: ", p)
-        print("f: ", f)
-        print("OBTAINED RESULTS")
-        print("p: ", p_real)
-        print("f: ", f_real)
+        if (verbose == 2 or (verbose == 1 and not result)):
+            print("EXPECTED RESULTS")
+            print("p: ", p)
+            print("f: ", f)
+            print("OBTAINED RESULTS")
+            print("p: ", p_real)
+            print("f: ", f_real)
     return (p_real, f_real, t)
 
 ### Test suite building blocks ###
@@ -101,8 +105,7 @@ def collection(collection):
     test_names = [x[:-4] for x in os.listdir(f"data/{collection}/input")]
     return [(collection, test_name) for test_name in test_names]
 
-print(collection("qaplib"))
 # print(summarize(min_of_k_n_times(("neos-guide", "7"), "sfw", 1, 100)))
 # print(summarize(min_of_k_n_times(("neos-guide", "7"), "tos", 3, 10)))
 # print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "sfw", 3, 20)))
-# print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "tos", 3, 20)))
+print(summarize(min_of_k_n_times(("qaplib", "lipa20a"), "tos", 1, 1)))
