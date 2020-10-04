@@ -46,7 +46,6 @@ def single_test(test, solver, verbose=0, random=False):
         assert len(elts) == 2*n**2
         return np.array(elts[:n**2]).reshape((n,n)), np.array(elts[n**2:]).reshape((n,n))
 
-    # TODO: make this work with new process file logic
     def generate_out():
         elts = process_file("output", "sln")
         n = elts.pop(0)

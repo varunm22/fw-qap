@@ -41,8 +41,6 @@ def g_(X, W, D):
     # below is exactly half of above when W,D are symmetric, which should be always
     return W.dot(X).dot(D.T)
 
-# TODO: make sure there aren't any major differences between the python lapjv
-# function and the one they code up
 def lapjv(C):
     cost, x, y = lap.lapjv(C)
     Q = np.zeros(C.shape)
