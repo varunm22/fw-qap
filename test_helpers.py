@@ -104,8 +104,3 @@ def collection(collection):
     assert collection in collections
     test_names = [x[:-4] for x in os.listdir(f"data/{collection}/input")]
     return [(collection, test_name) for test_name in test_names]
-
-# print(summarize(min_of_k_n_times(("neos-guide", "7"), "sfw", 1, 100)))
-# print(summarize(min_of_k_n_times(("neos-guide", "7"), "tos", 3, 10)))
-# print(summarize(min_of_k_n_times(("qaplib", "chr12a"), "sfw", 3, 20)))
-print(summarize(min_of_k_n_times(("qaplib", "lipa20a"), "tos", 1, 1)))

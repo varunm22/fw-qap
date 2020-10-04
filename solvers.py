@@ -14,7 +14,7 @@ def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
         Q = perm2mat(q)
         d = Q-X
         gap = -np.sum(g*d)
-        if gap/f0 < stop_tol:
+        if f0 < np.spacing(1) or gap/f0 < stop_tol:
             stop = 1
 
         # try other step sizes! 

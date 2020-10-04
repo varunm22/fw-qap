@@ -5,9 +5,9 @@ from collections import defaultdict
 from test_helpers import *
 
 tests = collection("qaplib")
-solvers = ["tos"] # include sfw too
+solvers = ["sfw", "tos"] # include sfw too
 k_s = [1] # try more ks, good to see tradeoffs
-n = 100
+n = 1
 
 # Columns of output table are:
 # collection, test_name, solver, k, n, cost_mean, cost_stdev, time_mean, time_stdev
