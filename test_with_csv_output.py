@@ -7,7 +7,7 @@ from test_helpers import *
 tests = collection("qaplib")
 solvers = ["sfw", "tos"] # include sfw too
 k_s = [1] # try more ks, good to see tradeoffs
-n = 1
+n = 10
 
 # Columns of output table are:
 # collection, test_name, solver, k, n, cost_mean, cost_stdev, time_mean, time_stdev
@@ -30,4 +30,4 @@ for test in tests:
             results["time_stdev"].append(result["time"]["stdev"])
 
 results_df = pd.DataFrame(results)
-results_df.to_csv("results/qaplib_k_1.csv", index=False)
+results_df.to_csv("results/qaplib_k_1_n_1.csv", index=False)
