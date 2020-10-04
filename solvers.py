@@ -17,8 +17,7 @@ def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
         if f0 < np.spacing(1) or gap/f0 < stop_tol:
             stop = 1
 
-        # try other step sizes! 
-        # TODO: try alp's step size formula
+        # this is exact step size, can also use approximation of:
         # eta = 2/(i+1)
         eta = line_search(X, d, g, W, D)
         if eta == 0:
