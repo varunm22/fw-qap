@@ -14,7 +14,7 @@ def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
         Q = perm2mat(q)
         d = Q-X
         gap = -np.sum(g*d)
-        if f0 < np.spacing(1) or gap/f0 < stop_tol:
+        if f0 < np.spacing(1) or (gap/f0 < stop_tol and norm(X) >= 1):
             stop = 1
 
         # this is exact step size, can also use approximation of:
@@ -29,7 +29,7 @@ def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
     if i == i_max:
         print("sfw no converge")
 
-    return X
+    return X, i
 
 def tos(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
     def proj1(X):
@@ -66,4 +66,4 @@ def tos(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
     if i == i_max:
         print("tos no converge")
 
-    return X
+    return X, i

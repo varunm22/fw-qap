@@ -34,7 +34,7 @@ def sink(A, n):
     return A
 
 def f_(X, W, D):
-    return np.sum(X.dot(W).dot(X.T)*D)
+    return np.sum(X.T.dot(W).dot(X)*D)
 
 def g_(X, W, D):
     # return (W.dot(P).dot(D.T) + W.T.dot(P).dot(D)).reshape(n*n)
