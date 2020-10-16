@@ -20,11 +20,12 @@ columns = [
 # TODO: discuss why sfw is bad at tai15b
 # TODO: make a new experiment to measure performance of TOS + BP Proj vs SFW
 results = pd.DataFrame(columns=columns)
-for test in tests:
+for test_idx in range(len(tests)):
+    test = tests[test_idx]
     collection, test_name = test
+    print(collection, test_name, f"({test_idx+1} / {len(tests)})")
     for solver in solvers:
         for k in k_s:
-            print(collection, test_name, solver)
             result = summarize(min_of_k_n_times((collection, test_name), solver, k, n))
             results = results.append({
                 "collection": collection,
