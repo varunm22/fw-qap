@@ -1,9 +1,10 @@
 import math
+import time
 from utils import *
 import numpy as np
 from numpy.linalg import norm
 
-def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
+def sfw(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
     n = n_(W)
     X = X0
     i = 0
@@ -31,16 +32,16 @@ def sfw(W, D, X0, i_max = 30, stop_tol = 0.0001):
 
     return X, i
 
+def tos_proj1(X):
+    return X.clip(0)
+
+def tos_proj2(X):
+    n = X.shape[0]
+    one = np.ones((n,1))
+    Z = (1/n + np.sum(X)/n**2)*np.eye(n) - (1/n)*X
+    return X + Z.dot(one).dot(one.T) - 1/n*one.dot(one.T).dot(X)
+
 def tos(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
-    def proj1(X):
-        return X.clip(0)
-
-    def proj2(X):
-        n = X.shape[0]
-        one = np.ones((n,1))
-        Z = (1/n + np.sum(X)/n**2)*np.eye(n) - (1/n)*X
-        return X + Z.dot(one).dot(one.T) - 1/n*one.dot(one.T).dot(X)
-
     n = n_(W)
     # these can be tuned
     L = norm(W)*norm(D)
@@ -54,9 +55,9 @@ def tos(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
     stop = 0
     while (i < i_max and stop == 0):
         X_old = np.copy(X)
-        Z = proj1(Y)
+        Z = tos_proj1(Y)
         d = g_(Z, W, D)
-        X = proj2(2*Z - Y - s*d)
+        X = tos_proj2(2*Z - Y - s*d)
         Y += l*(X-Z)
         if (norm(X-X_old)/max(1,norm(X))) < stop_tol:
             stop = 1
@@ -67,3 +68,33 @@ def tos(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
         print("tos no converge")
 
     return X, i
+
+def project_tos_to_birkhoff(X_in):
+    Y = np.copy(X_in)
+    s = 1
+    l = 1
+    for i in range(1e3):
+        Z = tos_proj1(Y)
+        X = tos_proj2(2*Z - Y - s*(Z-X_in))
+        Y += l(X-Z)
+    return X
+
+def solve_qap(W, D, solver, random):
+    n = n_(W)
+    X0 = np.ones((n, n))/n
+    if random:
+        lam = 0.5
+        X0 = (1-lam)*X0 + lam*sink(np.random.random(W.shape), 10)
+
+    t0 = time.time()
+    if solver == "sfw":
+        X, iters = sfw( W, D, X0, i_max = 100000)
+    elif solver == "tos":
+        X, iters = tos(W, D, X0, i_max = 100000)
+    else:
+        raise "not valid"
+    t = time.time()-t0
+
+    _, p_real, _ = lap.lapjv(-X)
+    P = perm2mat(p_real)
+    return X, P, t, iters

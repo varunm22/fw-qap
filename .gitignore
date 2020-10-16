@@ -4,3 +4,4 @@ __pycache__/
 *x360*
 aws-connect-info/
 .ipynb_checkpoints/
+foo.py

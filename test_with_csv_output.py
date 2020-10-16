@@ -6,19 +6,19 @@ from test_helpers import *
 
 tests = collection("qaplib")
 solvers = ["sfw", "tos"]
-k_s = [1] # try more ks, good to see tradeoffs
-n = 1
+k_s = [1,3] # try more ks, good to see tradeoffs
+n = 5
 
 columns = [
     "collection", "test_name", "solver", "k", "n", "cost_mean", "cost_stdev",
     "cost_best_known", "cost_relative_gap", "cost_pre_rounded",
     "norm_diff_best_prerounded", "norm_diff_best_rounded", "norm_diff_prerounded_rounded",
-    "time_mean", "time_stdev", "iters_mean", "iters_min", "iters_max",
-    "max_iters_reached(1e5)"
+    "time_mean", "time_stdev", "iters_best_mean", "iters_min_of_k_mean", "iters_mean_of_k_mean",
+    "max_iters_reached(1e5)", "birkhoff_infeasibility"
 ]
 
 # TODO: discuss why sfw is bad at tai15b
-# TODO: what is the whole TOS rounding process we want to do?
+# TODO: make a new experiment to measure performance of TOS + BP Proj vs SFW
 results = pd.DataFrame(columns=columns)
 for test in tests:
     collection, test_name = test
@@ -48,10 +48,12 @@ for test in tests:
                 "time_mean": result["time"]["mean"],
                 "time_stdev": result["time"]["stdev"],
 
-                "iters_mean": result["iters"]["mean"],
-                "iters_min": result["iters"]["min"],
-                "iters_max": result["iters"]["max"],
-                "max_iters_reached(1e5)": result["iters"]["max"] == 1e5
+                "iters_best_mean": result["iters"]["best_mean"],
+                "iters_min_of_k_mean": result["iters"]["min_of_k_mean"],
+                "iters_mean_of_k_mean": result["iters"]["mean_of_k_mean"],
+                "max_iters_reached(1e5)": result["iters"]["max_reached(1e5)"],
+
+                "birkhoff_infeasibility": result["birkhoff_infeasibility"]
             }, ignore_index=True)
 
-results.to_csv("results/test.csv", index=False)
+results.to_csv("results/qaplib_exp2.csv", index=False)
