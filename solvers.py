@@ -73,11 +73,15 @@ def project_tos_to_birkhoff(X_in):
     Y = np.copy(X_in)
     s = 1
     l = 1
-    for i in range(1e3):
+    for i in range(int(1e3)):
         Z = tos_proj1(Y)
         X = tos_proj2(2*Z - Y - s*(Z-X_in))
-        Y += l(X-Z)
+        Y += l*(X-Z)
     return X
+
+def tos_bp_project(W, D, X0, i_max = 1e4, stop_tol = 0.0001):
+    X, iters = tos(W, D, X0, i_max, stop_tol)
+    return project_tos_to_birkhoff(X), iters
 
 def solve_qap(W, D, solver, random):
     n = n_(W)
@@ -91,6 +95,8 @@ def solve_qap(W, D, solver, random):
         X, iters = sfw( W, D, X0, i_max = 100000)
     elif solver == "tos":
         X, iters = tos(W, D, X0, i_max = 100000)
+    elif solver == "tos-bp-project":
+        X, iters = tos_bp_project(W, D, X0, i_max = 100000)
     else:
         raise "not valid"
     t = time.time()-t0
