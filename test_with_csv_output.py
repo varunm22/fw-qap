@@ -4,16 +4,18 @@ import pandas as pd
 from collections import defaultdict
 from test_helpers import *
 
-tests = collection("qaplib")
-solvers = ["sfw", "tos"]
-k_s = [1,3] # try more ks, good to see tradeoffs
-n = 3
+tests = collection("tsplib")
+# solvers = ["sfw", "tos"]
+solvers = [ "tos"]
+k_s = [1]
+n = 1
+stop_tol = 1e-4
 
 columns = [
-    "collection", "test_name", "solver", "k", "n", "cost_mean", "cost_stdev",
-    "cost_best_known", "cost_relative_gap", "cost_pre_rounded",
-    "norm_diff_best_prerounded", "norm_diff_best_rounded", "norm_diff_prerounded_rounded",
-    "time_mean", "time_stdev", "iters_best_mean", "iters_min_of_k_mean", "iters_mean_of_k_mean",
+    "collection", "test_name", "solver", "k", "n", "stop_tol", "cost_mean", "cost_stdev",
+    "cost_best_known", "cost_relative_gap", "cost_pre_rounded", "norm_diff_best_prerounded",
+    "norm_diff_best_rounded", "norm_diff_prerounded_rounded", "time_mean", "time_stdev",
+    "iters_best_mean", "iters_min_of_k_mean", "iters_mean_of_k_mean",
     "max_iters_reached(1e5)", "birkhoff_infeasibility"
 ]
 
@@ -26,13 +28,14 @@ for test_idx in range(len(tests)):
     print(collection, test_name, f"({test_idx+1} / {len(tests)})")
     for solver in solvers:
         for k in k_s:
-            result = summarize(min_of_k_n_times((collection, test_name), solver, k, n))
+            result = summarize(min_of_k_n_times((collection, test_name), solver, k, n, stop_tol))
             results = results.append({
                 "collection": collection,
                 "test_name": test_name,
                 "solver": solver,
                 "k": k,
                 "n": n,
+                "stop_tol": stop_tol,
 
                 "cost_mean": result["cost"]["mean"],
                 "cost_stdev": result["cost"]["stdev"],
@@ -57,4 +60,4 @@ for test_idx in range(len(tests)):
                 "birkhoff_infeasibility": result["birkhoff_infeasibility"]
             }, ignore_index=True)
 
-results.to_csv("results/qaplib_exp2.csv", index=False)
+results.to_csv("results/qaplib_test.csv", index=False)

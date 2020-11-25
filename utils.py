@@ -37,9 +37,11 @@ def f_(X, W, D):
     return np.sum(X.T.dot(W).dot(X)*D)
 
 def g_(X, W, D):
-    # return (W.dot(P).dot(D.T) + W.T.dot(P).dot(D)).reshape(n*n)
-    # below is exactly half of above when W,D are symmetric, which should be always
-    return W.dot(X).dot(D.T)
+    if np.all(W == W.T) and np.all(D == D.T):
+        # reduces computation for symmetric matrices
+        return W.dot(X).dot(D.T)
+    else:
+        return (W.dot(X).dot(D.T) + W.T.dot(X).dot(D))/2
 
 def lapjv(C):
     cost, x, y = lap.lapjv(C)
