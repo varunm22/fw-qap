@@ -68,6 +68,7 @@ def load_tsp(test_name):
     for i in range(n):
         W[i][(i+1)%n] = 0.5
         W[i][(i-1)%n] = 0.5
+        # W[i][(i+1)%n] = 1
 
 
     best_sols = open("data/tsplib/best_sols", "r").readlines()

@@ -33,15 +33,15 @@ def sink(A, n):
         A = stoch(A, 1)
     return A
 
-def f_(X, W, D):
-    return np.sum(X.T.dot(W).dot(X)*D)
+def f_(X, W, D, W_s, D_s):
+    return np.sum(X.T @ W_s @ X * D)
 
-def g_(X, W, D):
+def g_(X, W, D, W_s, D_s):
     if np.all(W == W.T) and np.all(D == D.T):
         # reduces computation for symmetric matrices
-        return W.dot(X).dot(D.T)
+        return W_s @ X @ D_s.T
     else:
-        return (W.dot(X).dot(D.T) + W.T.dot(X).dot(D))/2
+        return (W_s @ X @ D_s.T + W_s.T @ X @ D_s)/2
 
 def lapjv(C):
     cost, x, y = lap.lapjv(C)
