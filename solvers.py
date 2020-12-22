@@ -54,7 +54,7 @@ def tos(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
     stop_tol = 1e-8
     n = n_(W)
     # these can be tuned
-    L = norm(W)*norm(D)
+    L = norm(W, 2)*norm(D, 2)
     L = L if L != 0 else 1e-6
     print("L", L)
     s = 1/L
@@ -100,10 +100,14 @@ def tos_bp_project(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
 
 def solve_qap(W, D, solver, random, stop_tol):
     n = n_(W)
-    X0 = np.ones((n, n))/n
     if random:
-        lam = 0.5
-        X0 = (1-lam)*X0 + lam*sink(np.random.random(W.shape), 10)
+        rand_dir = np.random.multivariate_normal(np.zeros(n**2), np.eye(n**2)).reshape((n,n))
+        X0 = sink(rand_dir, 10)
+    else:
+        X0 = np.ones((n, n))/n
+
+        # lam = 0.5
+        # X0 = (1-lam)*X0 + lam*sink(np.random.random(W.shape), 10)
 
     if np.sum(W != 0) / (W.shape[0]*W.shape[1]) < 0.25:
         W_s = csr_matrix(W)

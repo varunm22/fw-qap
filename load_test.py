@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from utils import *
+from sklearn.metrics.pairwise import euclidean_distances
 
 zero_indexed_slns = {("qaplib", "tai40a")}
 
@@ -60,10 +61,7 @@ def load_tsp(test_name):
         return ((p1[0]-p2[0])**2 + (p1[1] -p2[1])**2)**0.5
 
     n = len(vertices)
-    D = np.zeros((n,n))
-    for i in range(n):
-        for j in range(n):
-            D[i][j] = dist(vertices[i], vertices[j])
+    D = euclidean_distances(np.array(vertices))
     W = np.zeros((n,n))
     for i in range(n):
         W[i][(i+1)%n] = 0.5
