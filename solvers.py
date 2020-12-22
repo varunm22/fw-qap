@@ -51,7 +51,6 @@ def tos_proj2(X):
     # return X + Z.dot(one).dot(one.T) - 1/n*one.dot(one.T).dot(X)
 
 def tos(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
-    stop_tol = 1e-8
     n = n_(W)
     # these can be tuned
     L = norm(W, 2)*norm(D, 2)
