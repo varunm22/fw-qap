@@ -101,7 +101,8 @@ def tos_bp_project(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
 def solve_qap(W, D, solver, random, stop_tol):
     n = n_(W)
     if random:
-        rand_dir = np.random.multivariate_normal(np.zeros(n**2), np.eye(n**2)).reshape((n,n))
+        rand_dir = np.random.normal(np.zeros(n**2), np.ones(n**2), n**2)
+        rand_dir = np.abs(rand_dir).reshape((n,n))
         X0 = sink(rand_dir, 10)
     else:
         X0 = np.ones((n, n))/n

@@ -5,8 +5,7 @@ from collections import defaultdict
 from test_helpers import *
 
 tests = collection("tsplib")
-solvers = ["sfw", "tos"]
-# solvers = [ "tos"]
+solvers = ["tos", "sfw"]
 k_s = [1]
 n = 1
 stop_tol = 1e-4
