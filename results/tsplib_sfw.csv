@@ -1,0 +1,2 @@
+collection,test_name,solver,k,n,stop_tol,cost_mean,cost_stdev,cost_best_known,cost_relative_gap,cost_pre_rounded,norm_diff_best_prerounded,norm_diff_best_rounded,norm_diff_prerounded_rounded,time_mean,time_stdev,iters_best_mean,iters_min_of_k_mean,iters_mean_of_k_mean,max_iters_reached(1e5),birkhoff_infeasibility
+tsplib,pcb1173,tos,1,1,0.0001,1412033.1957812717,0.0,56892,23.819538701069952,1408851.6034789581,,,34.22109164296097,0.5763545036315918,0.0,1.0,1.0,1.0,False,0.0

@@ -36,6 +36,9 @@ def sink(A, n):
 def f_(X, W, D, W_s, D_s):
     return np.sum(X.T @ W_s @ X * D)
 
+def f_no_sparse(X, W, D):
+    return f_(X, W, D, W, D)
+
 def g_(X, W, D, W_s, D_s):
     if np.all(W == W.T) and np.all(D == D.T):
         # reduces computation for symmetric matrices

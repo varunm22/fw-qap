@@ -26,8 +26,6 @@ def sfw(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
             stop = 1
 
         X = X + eta*d
-        if i%10 == 0:
-            print("sfw", i, f0)
         i += 1
 
     if i == i_max:
@@ -50,12 +48,20 @@ def tos_proj2(X):
     # Z = (1/n + np.sum(X)/n**2)*np.eye(n) - (1/n)*X
     # return X + Z.dot(one).dot(one.T) - 1/n*one.dot(one.T).dot(X)
 
-def tos(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
+def tos_v2_proj1(X):
+    X_ = X.clip(0)
+    return X_/(X_.sum(axis=0)[np.newaxis,:])
+
+def tos_v2_proj2(X):
+    X_ = X.clip(0)
+    return X_/(X_.sum(axis=1)[:,np.newaxis])
+
+def tos_(W, D, W_s, D_s, X0, stop_tol, i_max, proj1, proj2):
     n = n_(W)
     # these can be tuned
     L = norm(W, 2)*norm(D, 2)
     L = L if L != 0 else 1e-6
-    print("L", L)
+    L = 4/3*L # temporary increase
     s = 1/L
     l = 1
 
@@ -65,23 +71,25 @@ def tos(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
     stop = 0
     while (i < i_max and stop == 0):
         X_old = np.copy(X)
-        Z = tos_proj1(Y)
+        Z = proj1(Y)
         d = g_(Z, W, D, W_s, D_s)
-        X = tos_proj2(2*Z - Y - s*d)
+        X = proj2(2*Z - Y - s*d)
         Y += l*(X-Z)
         if (norm(X-X_old)/max(1,norm(X))) < stop_tol:
             stop = 1
 
-        if i%10 == 0:
-            print("tos", i)
-        if i%100 == 0:
-            print(f_(X, W, D, W_s, D_s))
         i += 1
 
     if i == i_max:
         print("tos no converge")
 
     return X, i
+
+def tos(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
+    return tos_(W, D, W_s, D_s, X0, stop_tol, i_max, tos_proj1, tos_proj2)
+
+def tos_v2(W, D, W_s, D_s, X0, stop_tol = 1e-4, i_max = 1e4):
+    return tos_(W, D, W_s, D_s, X0, stop_tol, i_max, tos_v2_proj1, tos_v2_proj2)
 
 def project_tos_to_birkhoff(X_in):
     Y = np.copy(X_in)
@@ -111,12 +119,12 @@ def solve_qap(W, D, solver, random, stop_tol):
 
     if np.sum(W != 0) / (W.shape[0]*W.shape[1]) < 0.25:
         W_s = csr_matrix(W)
-        print("replaced W")
+        # print("replaced W")
     else:
         W_s = W
     if np.sum(D != 0) / (D.shape[0]*D.shape[1]) < 0.25:
         D_s = csr_matrix(D)
-        print("replaced D")
+        # print("replaced D")
     else:
         D_s = D
 
@@ -125,6 +133,8 @@ def solve_qap(W, D, solver, random, stop_tol):
         X, iters = sfw(W, D, W_s, D_s, X0, stop_tol, i_max = 100000)
     elif solver == "tos":
         X, iters = tos(W, D, W_s, D_s, X0, stop_tol, i_max = 100000)
+    elif solver == "tos_v2":
+        X, iters = tos_v2(W, D, W_s, D_s, X0, stop_tol, i_max = 100000)
     elif solver == "tos-bp-project":
         X, iters = tos_bp_project(W, D, W_s, D_s, X0, stop_tol, i_max = 100000)
     else:

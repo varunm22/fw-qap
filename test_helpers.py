@@ -14,7 +14,7 @@ def single_test(test, solver, stop_tol, random=False):
     W, D, best_f, best_P = load(test)
     X, P, t, iters = solve_qap(W, D, solver, random, stop_tol)
     return {
-        "X": X, "P": P, "time": t, "iters": iters, "f_X": f_(X, W, D), "f_P": f_(P, W, D),
+        "X": X, "P": P, "time": t, "iters": iters, "f_X": f_no_sparse(X, W, D), "f_P": f_no_sparse(P, W, D),
         "best_f": best_f, "best_P": best_P
     }
 

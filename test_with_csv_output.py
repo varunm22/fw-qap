@@ -4,10 +4,11 @@ import pandas as pd
 from collections import defaultdict
 from test_helpers import *
 
-tests = collection("tsplib")
+tests = collection("qaplib-subset")
 solvers = ["tos", "sfw"]
-k_s = [1]
-n = 1
+# solvers = ["tos_v2"]
+k_s = [3]
+n = 10
 stop_tol = 1e-4
 
 columns = [
@@ -59,4 +60,4 @@ for test_idx in range(len(tests)):
                 "birkhoff_infeasibility": result["birkhoff_infeasibility"]
             }, ignore_index=True)
 
-results.to_csv("results/qaplib_test.csv", index=False)
+results.to_csv("results/qaplib_subset_sfw_tos.csv", index=False)

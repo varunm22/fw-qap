@@ -31,8 +31,8 @@ def simple_loader(test):
 
     W, D = generate_in()
     best_f, best_P = generate_out()
-    if (best_f!=f_(best_P, W, D)):
-        assert(best_f == f_(best_P.T, W, D))
+    if (best_f!=f_no_sparse(best_P, W, D)):
+        assert(best_f == f_no_sparse(best_P.T, W, D))
         best_P = best_P.T
     return (W, D, best_f, best_P)
 
@@ -79,7 +79,7 @@ def load_tsp(test_name):
 
 def load(test):
     collection, test_name = test
-    if collection == "neos-guide" or collection == "qaplib":
+    if collection == "neos-guide" or collection == "qaplib" or collection == "qaplib-subset":
         return(simple_loader(test))
     elif collection == "tsplib":
         W, D, best_f = load_tsp(test_name)
