@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 from numpy.linalg import norm
 from utils import *
 from solvers import solve_qap
@@ -12,9 +13,12 @@ random: if true, shift x0 by doubly stochastic random matrix
 """
 def single_test(test, solver, stop_tol, random=False):
     W, D, best_f, best_P = load(test)
-    X, P, t, iters = solve_qap(W, D, solver, random, stop_tol)
+    X, P, t, iters, info = solve_qap(W, D, solver, random, stop_tol)
+
+    info = pd.DataFrame(info)
+    info.to_csv("results/performance-track/"+solver+"-"+test[1]+".csv")
     return {
-        "X": X, "P": P, "time": t, "iters": iters, "f_X": f_no_sparse(X, W, D), "f_P": f_no_sparse(P, W, D),
+        "X": X, "P": P, "time": t, "iters": iters, "f_X": f_(X, W, D), "f_P": f_(P, W, D),
         "best_f": best_f, "best_P": best_P
     }
 
@@ -74,9 +78,11 @@ def summarize(results):
         "birkhoff_infeasibility": np.mean([birkhoff_inf(x) for x in results["X"]])
     }
 
+
 # get list of tests from collection name
 def collection(collection):
     collections = os.listdir("data")
     assert collection in collections
     test_names = [x[:-4] for x in os.listdir(f"data/{collection}/input")]
     return [(collection, test_name) for test_name in test_names]
+

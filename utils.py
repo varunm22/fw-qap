@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
-from scipy import sparse
+from scipy import sparse as sp
+import scipy.sparse.linalg as sp_linalg
 import lap
 
 def n_(W):
@@ -33,18 +34,15 @@ def sink(A, n):
         A = stoch(A, 1)
     return A
 
-def f_(X, W, D, W_s, D_s):
-    return np.sum(X.T @ W_s @ X * D)
+def f_(X, W, D):
+    return np.sum(X.T @ W @ X * D)
 
-def f_no_sparse(X, W, D):
-    return f_(X, W, D, W, D)
-
-def g_(X, W, D, W_s, D_s):
-    if np.all(W == W.T) and np.all(D == D.T):
+def g_(X, W, D):
+    if is_symmetric(W) and is_symmetric(D):
         # reduces computation for symmetric matrices
-        return W_s @ X @ D_s.T
+        return W.dot(X).dot(D)  # W @ X @ D
     else:
-        return (W_s @ X @ D_s.T + W_s.T @ X @ D_s)/2
+        return (W.T.dot(X).dot(D.T) + W.dot(X).dot(D)) / 2  # (W.T @ X @ D.T + W @ X @ D)/2
 
 def lapjv(C):
     cost, x, y = lap.lapjv(C)
@@ -72,3 +70,35 @@ def line_search(X, d, g, W, D):
     else:
         eta = 1
     return eta
+
+
+def is_symmetric(X, tol=1e-8):
+    if sp.issparse(X):
+        if sp_linalg.norm(X - X.T, 'fro') < tol:
+            return True
+        else:
+            return False
+        # # Code below might be more efficient, we need to try.
+        # X = sp.coo_matrix(X)
+        # r, c, v = X.row, X.col, X.data
+        # tril_no_diag = r > c
+        # triu_no_diag = c > r
+        # if triu_no_diag.sum() != tril_no_diag.sum():
+        #     return False
+        # rl = r[tril_no_diag]
+        # cl = c[tril_no_diag]
+        # vl = v[tril_no_diag]
+        # ru = r[triu_no_diag]
+        # cu = c[triu_no_diag]
+        # vu = v[triu_no_diag]
+        # sortl = np.lexsort((cl, rl))
+        # sortu = np.lexsort((ru, cu))
+        # vl = vl[sortl]
+        # vu = vu[sortu]
+        # return np.allclose(vl, vu)
+    else:
+        if np.linalg.norm(X - X.T, 'fro') < tol:
+            return True
+        else:
+            return False
+
